@@ -4,7 +4,6 @@
 
 
 int main(int argc, char *argv[]) {
-
     if (argc < 3) {
         return 1;
     }
@@ -20,9 +19,6 @@ int main(int argc, char *argv[]) {
             add_file(argv[2], argv[4]);
         }
     }
-
-
-
 
     return 0;
 }

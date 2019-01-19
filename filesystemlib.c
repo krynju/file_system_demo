@@ -3,16 +3,12 @@
 #include <memory.h>
 #include "filesystemlib.h"
 
-void test() {
-
-}
-
 int create_filesystem(char *name) {
     FILE *file = fopen(name, "w");
     printf("Creating filesystem: %.20s ... ", name);
-    char *p = malloc(4096);
-    memset(p, 0, 4096);
-    fwrite(p, 4096, 1, file);
+    char *p = malloc(METADATA_SIZE + DATA_SIZE);
+    memset(p, 0, METADATA_SIZE + DATA_SIZE);
+    fwrite(p, METADATA_SIZE + DATA_SIZE, 1, file);
     fclose(file);
     free(p);
     printf("success\n");
@@ -20,13 +16,42 @@ int create_filesystem(char *name) {
 }
 
 int add_file(char *filesystem_name, char *filename) {
-    struct file_metadata f_meta;
+    struct FileMetadata file_metadata;
     int meta_offset;
-    FILE *filesystem_handle;
+    FILE *filesystem_handle, *file_handle;
 
     printf("Adding file %.30s to %.30s ...\n", filename, filesystem_name);
+
+    printf(">Checking file size ... ");
+    file_handle = fopen(filename, "r");
+    fseek(file_handle, 0, SEEK_END);
+    long filesize = ftell(file_handle);
+    printf("size: %.10li\n", filesize);
+    fclose(file_handle);
+
+    printf(">Looking for free space ... ");
+    int base = find_empty_data_space(filesystem_name, (unsigned int) filesize);
+    if (base == -1) {
+        printf("failed\n");
+        printf("Failed to find empty data space large enough to fit the file\n");
+        return -1;
+    }
+    printf("found at offset %.10d\n", base);
+
+    printf("> Writing file data: ... ");
+    file_handle = fopen(filename, "r");
+    char *p = malloc((size_t) filesize);
+    fread(p, (size_t) filesize, 1, file_handle);
+    fclose(file_handle);
+
+    filesystem_handle = fopen(filesystem_name, "r+");
+    fseek(filesystem_handle, METADATA_SIZE + base, SEEK_SET);
+    fwrite(p, (size_t) filesize, 1, filesystem_handle);
+    fclose(filesystem_handle);
+    free(p);
+    printf("done\n");
+
     printf("> Writing file metadata: ... ");
-    //check empty space first
     meta_offset = find_empty_metadata_slot(filesystem_name);
     if (meta_offset < 0) {
         printf("failed\n");
@@ -34,16 +59,19 @@ int add_file(char *filesystem_name, char *filename) {
         return -1;
     }
 
-    f_meta.used = 1;
-    sscanf(filename, "%26s", f_meta.name);
+    file_metadata.used = 1;
+    sscanf(filename, "%26s", file_metadata.name);
+    file_metadata.base = (unsigned short) base;
+    file_metadata.size = (unsigned short) filesize;
 
     filesystem_handle = fopen(filesystem_name, "r+");
     fseek(filesystem_handle, meta_offset, SEEK_SET);
-    fwrite(&f_meta, 1, 32, filesystem_handle);
+    fwrite(&file_metadata, 1, 32, filesystem_handle);
     fclose(filesystem_handle);
 
     printf("success\n");
     printf(">> Added file metadata at slot: %3d, offset: %4d\n", meta_offset / 32, meta_offset);
+
     printf("Done\n");
     return 0;
 }
@@ -52,7 +80,7 @@ int find_empty_metadata_slot(char *filesystem_name) {
     FILE *filesystem_handle = fopen(filesystem_name, "r");
     int offset = 0;
 
-    while (offset < 4096) {
+    while (offset < METADATA_SIZE) {
         fseek(filesystem_handle, offset, SEEK_SET);
         if (getc(filesystem_handle) == 0x00) {
             fclose(filesystem_handle);
@@ -62,6 +90,50 @@ int find_empty_metadata_slot(char *filesystem_name) {
     }
 
     fclose(filesystem_handle);
+    return -1;
+}
+
+int find_empty_data_space(char *filesystem_name, unsigned int size) {
+    char metadata[METADATA_SIZE];
+    unsigned short int taken_space[METADATA_MAX_ENTRIES][2];
+    int file_count = 0;
+    FILE *filesystem_handle = fopen(filesystem_name, "r");
+
+    fread(metadata, METADATA_SIZE, 1, filesystem_handle);
+    fclose(filesystem_handle);
+
+    for (int i = 0; i < METADATA_SIZE; i += 32)
+        if (metadata[i] == 0x01) {
+            taken_space[file_count][0] = *((unsigned short *) &metadata[i + 28]);
+            taken_space[file_count][1] = *((unsigned short *) &metadata[i + 30]);
+            file_count++;
+        }
+
+    for (int i = 0; i < file_count - 1; i++)
+        for (int j = 0; j < file_count - i - 1; j++)
+            if (taken_space[j][0] > taken_space[j + 1][0]) {
+                unsigned short int temp[2];
+                temp[0] = taken_space[j][0];
+                temp[1] = taken_space[j][1];
+                taken_space[j][0] = taken_space[j + 1][0];
+                taken_space[j][1] = taken_space[j + 1][1];
+                taken_space[j + 1][0] = temp[0];
+                taken_space[j + 1][1] = temp[0];
+            }
+
+    if (file_count == 0)
+        return 0;
+
+    if (taken_space[0][0] >= size)
+        return 0;
+
+    for (int i = 1; i < file_count - 1; ++i)
+        if (taken_space[i][0] - taken_space[i - 1][0] - taken_space[i - 1][1] >= size)
+            return taken_space[i - 1][0] + taken_space[i - 1][1];
+
+    if (DATA_SIZE - taken_space[file_count - 1][0] - taken_space[file_count - 1][1] >= size)
+        return taken_space[file_count - 1][0] + taken_space[file_count - 1][1];
+
     return -1;
 }
 
