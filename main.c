@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
 
     if (argc == 5) {
         if (strcmp(argv[1], "-f\0") == 0) {
-            write_file_metadata(argv[2], argv[4]);
+            add_file(argv[2], argv[4]);
         }
     }
 

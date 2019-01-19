@@ -8,6 +8,8 @@ void test();
 
 int create_filesystem(char *);
 
-int write_file_metadata(char *, char *);
+int add_file(char *, char *);
+
+int find_empty_metadata_slot(char *filesystem_name);
 
 #endif //FILE_SYSTEM_DEMO_FILESYSTEMLIB_H
