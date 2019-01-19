@@ -15,62 +15,64 @@ int create_filesystem(char *name) {
     return 0;
 }
 
-int add_file(char *filesystem_name, char *filename) {
+int add_file(char *filesystem_name, char *file_name) {
     struct FileMetadata file_metadata;
-    int meta_offset;
+    int metadata_offset;
     FILE *filesystem_handle, *file_handle;
 
-    printf("Adding file %.30s to %.30s ...\n", filename, filesystem_name);
+    printf("Adding file %.30s to %.30s ...\n", file_name, filesystem_name);
 
-    printf(">Checking file size ... ");
-    file_handle = fopen(filename, "r");
+
+    printf("> Checking file size ... ");
+    file_handle = fopen(file_name, "r");
     fseek(file_handle, 0, SEEK_END);
     long filesize = ftell(file_handle);
-    printf("size: %.10li\n", filesize);
     fclose(file_handle);
+    printf("done\n # filesize: %.10li\n", filesize);
 
-    printf(">Looking for free space ... ");
+
+    printf("> Looking for free space ... ");
     int base = find_empty_data_space(filesystem_name, (unsigned int) filesize);
     if (base == -1) {
-        printf("failed\n");
-        printf("Failed to find empty data space large enough to fit the file\n");
+        printf("failed\n > Failed to find empty data space large enough to fit the file\n");
         return -1;
     }
-    printf("found at offset %.10d\n", base);
+    printf("done\n # found at offset: %.10d\n", base);
+
+
+    printf("> Looking for free metadata slot ... ");
+    metadata_offset = find_empty_metadata_slot(filesystem_name);
+    if (metadata_offset < 0) {
+        printf("failed\n > Failed to find an empty metadata spot, remove a file to create a free slot\n");
+        return -1;
+    }
+    printf("done\n # found at slot: %3d, offset: %4d\n", metadata_offset / 32, metadata_offset);
+
+
+    printf("> Writing file metadata: ... ");
+    file_metadata.used = 1;
+    sscanf(file_name, "%26s", file_metadata.name);
+    file_metadata.base = (unsigned short) base;
+    file_metadata.size = (unsigned short) filesize;
+    filesystem_handle = fopen(filesystem_name, "r+");
+    fseek(filesystem_handle, metadata_offset, SEEK_SET);
+    fwrite(&file_metadata, 1, 32, filesystem_handle);
+    fclose(filesystem_handle);
+    printf("done\n # Added file metadata at slot: %3d, offset: %4d\n", metadata_offset / 32, metadata_offset);
+
 
     printf("> Writing file data: ... ");
-    file_handle = fopen(filename, "r");
+    file_handle = fopen(file_name, "r");
     char *p = malloc((size_t) filesize);
     fread(p, (size_t) filesize, 1, file_handle);
     fclose(file_handle);
-
     filesystem_handle = fopen(filesystem_name, "r+");
     fseek(filesystem_handle, METADATA_SIZE + base, SEEK_SET);
     fwrite(p, (size_t) filesize, 1, filesystem_handle);
     fclose(filesystem_handle);
     free(p);
-    printf("done\n");
+    printf("done\n # Added file data at offset: %.10i, bytecount: %li\n", base, filesize);
 
-    printf("> Writing file metadata: ... ");
-    meta_offset = find_empty_metadata_slot(filesystem_name);
-    if (meta_offset < 0) {
-        printf("failed\n");
-        printf(">Failed to find an empty metadata spot, remove a file to create a free slot\n");
-        return -1;
-    }
-
-    file_metadata.used = 1;
-    sscanf(filename, "%26s", file_metadata.name);
-    file_metadata.base = (unsigned short) base;
-    file_metadata.size = (unsigned short) filesize;
-
-    filesystem_handle = fopen(filesystem_name, "r+");
-    fseek(filesystem_handle, meta_offset, SEEK_SET);
-    fwrite(&file_metadata, 1, 32, filesystem_handle);
-    fclose(filesystem_handle);
-
-    printf("success\n");
-    printf(">> Added file metadata at slot: %3d, offset: %4d\n", meta_offset / 32, meta_offset);
 
     printf("Done\n");
     return 0;

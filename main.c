@@ -16,7 +16,10 @@ int main(int argc, char *argv[]) {
 
     if (argc == 5) {
         if (strcmp(argv[1], "-f\0") == 0) {
-            add_file(argv[2], argv[4]);
+            if (strcmp(argv[3], "-i\0") == 0) {
+                add_file(argv[2], argv[4]);
+            }
+
         }
     }
 
