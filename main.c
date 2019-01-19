@@ -15,6 +15,8 @@ int main(int argc, char *argv[]) {
             remove_filesystem(argv[2]);
         if (strcmp(argv[1], "-l\0") == 0)
             display_catalogue(argv[2]);
+        if (strcmp(argv[1], "-lr\0") == 0)
+            display_catalogue_raw(argv[2]);
     }
 
 

@@ -231,9 +231,7 @@ int copy_file_from(char *filesystem_name, char *file_name, char *output_name) {
 }
 
 int display_catalogue(char *filesystem_name) {
-
     char metadata[METADATA_SIZE];
-    unsigned short int taken_space[METADATA_MAX_ENTRIES][2];
     int file_count = 0, total_size = 0;
     FILE *filesystem_handle = fopen(filesystem_name, "r");
     fread(metadata, METADATA_SIZE, 1, filesystem_handle);
@@ -252,6 +250,22 @@ int display_catalogue(char *filesystem_name) {
 
     printf("files: %3d, total size: %5d / %5d, usage: %2.3f %%", file_count, total_size, DATA_SIZE,
            1.0 * total_size / DATA_SIZE);
+    return 0;
+}
+
+int display_catalogue_raw(char *filesystem_name) {
+    char metadata[METADATA_SIZE];
+    FILE *filesystem_handle = fopen(filesystem_name, "r");
+    fread(metadata, METADATA_SIZE, 1, filesystem_handle);
+    fclose(filesystem_handle);
+
+    for (int i = 0; i < METADATA_SIZE; i += 32)
+        if (metadata[i] == 0x01) {
+            printf("%s\t", &metadata[i + 1]);
+            printf("%d\t", *((unsigned short *) &metadata[i + 28]));
+            printf("%d", *((unsigned short *) &metadata[i + 30]));
+            printf("\n");
+        }
     return 0;
 }
 
