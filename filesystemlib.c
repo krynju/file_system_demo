@@ -22,6 +22,13 @@ int add_file(char *filesystem_name, char *file_name) {
 
     printf("Adding file %.30s to %.30s ...\n", file_name, filesystem_name);
 
+//    printf("> Checking if file is already in the filesystem ... ");
+//    metadata_offset = find_file(filesystem_name,file_name);
+//    if(metadata_offset != -1){
+//        printf("failed\n # File exists in the filesystem, remove it before adding it\n");
+//        return -1;
+//    }
+//    printf("not found\n # File not found in the filesystem, continue operation\n");
 
     printf("> Checking file size ... ");
     file_handle = fopen(file_name, "r");
@@ -138,5 +145,46 @@ int find_empty_data_space(char *filesystem_name, unsigned int size) {
 
     return -1;
 }
+
+int remove_file(char *filesystem_name, char *file_name) {
+    FILE *filesystem_handle;
+    int metadata_offset;
+
+    printf("Removing file %.27s\n", file_name);
+
+    printf("> Finding file metadata ... ");
+    metadata_offset = find_file(filesystem_name, file_name);
+    if (metadata_offset == -1) {
+        printf("failed\n # File not found ");
+        return -1;
+    }
+    printf("done\n # File found at offset %.10d\n", metadata_offset);
+
+    printf("> Deactivating file entry in the filesystem metadata table ... ");
+    filesystem_handle = fopen(filesystem_name, "r+");
+    fseek(filesystem_handle, metadata_offset, SEEK_SET);
+    fputc(0x00, filesystem_handle);
+    fclose(filesystem_handle);
+    printf("done\n # Metadata deactivated successfully at %.10d\n", metadata_offset);
+
+    printf("Done\n");
+    return 0;
+}
+
+int find_file(char *filesystem_name, char *file_name) {
+    char metadata[METADATA_SIZE];
+
+    FILE *filesystem_handle = fopen(filesystem_name, "r");
+    fread(metadata, METADATA_SIZE, 1, filesystem_handle);
+    fclose(filesystem_handle);
+
+    for (int i = 0; i < METADATA_SIZE; i += 32)
+        if (metadata[i] == 0x01 && 0 == strcmp(file_name, &metadata[i + 1]))
+            return i;
+
+    return -1;
+}
+
+
 
 

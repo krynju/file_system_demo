@@ -8,6 +8,10 @@ int create_filesystem(char *);
 
 int add_file(char *, char *);
 
+int remove_file(char *, char *);
+
+int find_file(char *, char *);
+
 int find_empty_metadata_slot(char *);
 
 int find_empty_data_space(char *filesystem_name, unsigned int size);

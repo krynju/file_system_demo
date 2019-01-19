@@ -8,20 +8,19 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (argc == 3) {
-        if (strcmp(argv[1], "-c\0") == 0) {
+    if (argc == 3)
+        if (strcmp(argv[1], "-c\0") == 0)
             create_filesystem(argv[2]);
-        }
-    }
 
-    if (argc == 5) {
+
+    if (argc == 5)
         if (strcmp(argv[1], "-f\0") == 0) {
-            if (strcmp(argv[3], "-i\0") == 0) {
+            if (strcmp(argv[3], "-a\0") == 0)
                 add_file(argv[2], argv[4]);
-            }
-
+            if (strcmp(argv[3], "-d\0") == 0)
+                remove_file(argv[2], argv[4]);
         }
-    }
+
 
     return 0;
 }
