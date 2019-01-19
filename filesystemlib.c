@@ -11,7 +11,7 @@ int create_filesystem(char *name) {
     fwrite(p, METADATA_SIZE + DATA_SIZE, 1, file);
     fclose(file);
     free(p);
-    printf("success\n");
+    printf("done\n");
     return 0;
 }
 
@@ -185,6 +185,73 @@ int find_file(char *filesystem_name, char *file_name) {
     return -1;
 }
 
+int remove_filesystem(char *filesystem_name) {
+    if (remove(filesystem_name) != 0)
+        printf("File not found \n");
+    printf("Successfully removed the filesystem");
+    return 0;
+}
 
+int copy_file_from(char *filesystem_name, char *file_name, char *output_name) {
+    int metadata_offset;
+    unsigned short int base, size;
+    char metadata[32];
+    FILE *filesystem_handle, *output_handle;
 
+    printf("Copying file %.10s from the filesystem %.10s to %.10s\n", file_name, filesystem_name, output_name);
+
+    printf("> Finding file metadata ... ");
+    metadata_offset = find_file(filesystem_name, file_name);
+    if (metadata_offset == -1) {
+        printf("failed\n # File not found ");
+        return -1;
+    }
+    printf("done\n # File found at offset %.10d\n", metadata_offset);
+
+    printf("> Copying the file ...");
+    filesystem_handle = fopen(filesystem_name, "r");
+    fseek(filesystem_handle, metadata_offset, SEEK_SET);
+    fread(metadata, 32, 1, filesystem_handle);
+    base = *((unsigned short *) &metadata[28]);
+    size = *((unsigned short *) &metadata[30]);
+
+    char *p = malloc((size_t) size);
+    fseek(filesystem_handle, METADATA_SIZE + base, SEEK_SET);
+    fread(p, (size_t) size, 1, filesystem_handle);
+    fclose(filesystem_handle);
+
+    output_handle = fopen(output_name, "w");
+    fwrite(p, (size_t) size, 1, output_handle);
+    fclose(output_handle);
+    free(p);
+    printf("done\n # File copied successfully\n");
+
+    printf("Done\n");
+    return 0;
+}
+
+int display_catalogue(char *filesystem_name) {
+
+    char metadata[METADATA_SIZE];
+    unsigned short int taken_space[METADATA_MAX_ENTRIES][2];
+    int file_count = 0, total_size = 0;
+    FILE *filesystem_handle = fopen(filesystem_name, "r");
+    fread(metadata, METADATA_SIZE, 1, filesystem_handle);
+    fclose(filesystem_handle);
+
+    printf("name\t\t| base \t| size \n");
+    for (int i = 0; i < METADATA_SIZE; i += 32)
+        if (metadata[i] == 0x01) {
+            printf("%.27s\t", &metadata[i + 1]);
+            printf("%5d\t", *((unsigned short *) &metadata[i + 28]));
+            printf("%5d", *((unsigned short *) &metadata[i + 30]));
+            total_size += *((unsigned short *) &metadata[i + 30]);
+            file_count++;
+            printf("\n");
+        }
+
+    printf("files: %3d, total size: %5d / %5d, usage: %2.3f %%", file_count, total_size, DATA_SIZE,
+           1.0 * total_size / DATA_SIZE);
+    return 0;
+}
 
