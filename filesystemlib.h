@@ -10,6 +10,8 @@ int remove_filesystem(char *filesystem_name);
 
 int add_file(char *filesystem_name, char *file_name);
 
+int add_file_as(char *filesystem_name, char *file_name, char *output_name);
+
 int remove_file(char *filesystem_name, char *file_name);
 
 int find_file(char *filesystem_name, char *file_name);

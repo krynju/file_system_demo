@@ -29,10 +29,14 @@ int main(int argc, char *argv[]) {
         }
 
     if (argc == 7)
-        if (strcmp(argv[1], "-f\0") == 0)
+        if (strcmp(argv[1], "-f\0") == 0) {
             if (strcmp(argv[3], "-n\0") == 0)
                 if (strcmp(argv[5], "-o\0") == 0)
                     return copy_file_from(argv[2], argv[4], argv[6]);
+            if (strcmp(argv[3], "-a\0") == 0)
+                if (strcmp(argv[5], "-o\0") == 0)
+                    return add_file_as(argv[2], argv[4], argv[6]);
+        }
 
 
 
