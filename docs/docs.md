@@ -20,11 +20,13 @@ Wymagana funkcjonalność to:
 
 System plików jest jednokatalogowy i może przechowywać maksymalnie 128 plików. Wpis pojedynczego pliku w metadanych zajmuje 32B. Zawiera on na początku bajt określający czy dany wpis jest ważny. Następnie zarezerwowane jest w nim 27 bajtów na nazwę pliku. Na końcu znajduje się miejsce zarezerwowane na dwie liczby typu UInt16, które określają offset bazowy pliku w części danych i rozmiar pliku.
 
-<img src="/media/image1.png" style="width:4.20365in;height:1.38973in" />
+<img src="https://github.com/krynju/file_system_demo/blob/master/docs/media/image1.png" style="width:4.20365in;height:1.38973in" />
 
 Rysunek 1: metadane pliku
 
-<img src="/media/image2.png" style="width:2.49444in;height:3.18403in" />
+<img src="https://github.com/krynju/file_system_demo/blob/master/docs/media/image2.png" style="width:2.49444in;height:3.18403in" />
+
+Rysunek 2: metadane pliku
 
 System plików jest w stanie przechowywać 64KiB danych. Pliki przechowywane są w sposób ciągły, w metadanych przechowywany jest offset startowy oraz rozmiar pliku. Dane te są 16 bitowe ze względu na to, że taka długość offsetu wystarcza na pełne zaadresowanie przestrzeni danych.
 
@@ -34,52 +36,63 @@ Model ten jest w stanie bez przeszkód realizować określoną funkcjonalność.
 
 ## tworzenie wirtualnego dysku
 
-int create\_filesystem(char \*filesys\_name);  
-./filesysexec -c filesys\_name
+`int create\_filesystem(char \*filesys\_name); `
+
+`./filesysexec -c filesys\_name`
 
 Tworzy plik system plików i alokuje w nim wystarczająco pamięci na przedział metadanych i danych.
 
 ## usuwanie wirtualnego dysku
 
-int remove\_filesystem(char \*filesys\_name);  
-./filesysexec -d filesys\_name
+`int remove\_filesystem(char \*filesys\_name);  `
+
+`./filesysexec -d filesys\_name`
 
 Usuwa plik z systemem plików.
 
 ## kopiowanie pliku z dysku systemu na dysk wirtualny
 
-int add\_file(char \*filesys\_name, char \*file\_name);  
-./filesysexec -f filesys\_name -a file\_name  
-int add\_file\_as(char \*filesys\_name, char \*file\_name, char \*output\_name);  
-./filesysexec -f filesys\_name -a file\_name -o output\_name
+`int add\_file(char \*filesys\_name, char \*file\_name); ` 
+
+`./filesysexec -f filesys\_name -a file\_name  `
+
+`int add\_file\_as(char \*filesys\_name, char \*file\_name, char \*output\_name);`
+
+`./filesysexec -f filesys\_name -a file\_name -o output\_name`
+
 
 Kopiuje plik o podanej w argumencie nazwie do systemu plików. Pierwsza funkcja dodaje plik do systemu plików o tej samej nazwie, druga zaś dodaje do systemu plików plik o podanej nazwie, co przydaje się w trakcie testowania systemu plików.
 
 ## kopiowanie pliku z dysku wirtualnego na dysk systemu
 
-int copy\_file\_from(char \*filesys\_name, char \*file\_name, char \*output\_name);  
-./filesysexec -f filesystem -a file\_name -o output\_name
+`int copy\_file\_from(char \*filesys\_name, char \*file\_name, char \*output\_name);`
+
+`./filesysexec -f filesystem -a file\_name -o output\_name`
+
 
 Kopiuje plik o podanej w argumencie nazwie z systemu plików i zapisuje go z podaną w argumencie nazwą.
 
 ## usuwanie pliku z wirtualnego dysku
 
-int remove\_file(char \*filesys\_name, char \*file\_name);  
-./filesysexec -f filesys\_name -d file\_name
+`int remove\_file(char \*filesys\_name, char \*file\_name);  `
+
+`./filesysexec -f filesys\_name -d file\_name`
 
 Usuwa plik o podanej w argumencie nazwie z systemu plików.
 
 ## wyświetlanie katalogu dysku wirtualnego
 
-int display\_catalogue(char \*filesys\_name);  
-./filesysexec -l filesystem
+`int display\_catalogue(char \*filesys\_name);  `
+
+`./filesysexec -l filesystem`
 
 Wyświetla katalog systemu plików o nazwie podanej w argumencie.
 
 ## wyświetlenie zestawienia z aktualną map zajętości wirtualnego dysku 
 
-int display\_map(char \*filesys\_name);  
-./filesysexec -lr filesystem
+`int display\_map(char \*filesys\_name);  `
+
+`./filesysexec -lr filesystem`
 
 Wyświetla mapę pamięci systemu plików.
 
