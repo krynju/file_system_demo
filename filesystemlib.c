@@ -303,23 +303,39 @@ int display_map(char *filesystem_name) {
                space[0][0]
         );
     }
-    printf("| full\t| %d\t| %d\t| %d\n",
-           space[0][0],
-           space[0][0] + space[0][1],
-           space[0][1]
-    );
+
+    int c_base = 0, c_size = 0, c_end = 0;
+    c_base = space[0][0];
+    c_end = space[0][0] + space[0][1];
+    c_size = space[0][1];
 
     for (int i = 1; i < file_count; ++i) {
-        if (space[i][0] - space[i - 1][0] - space[i - 1][1] != 0)
+        if (space[i][0] - space[i - 1][0] - space[i - 1][1] != 0) {
+            printf("| full\t| %d\t| %d\t| %d\n",
+                   c_base,
+                   c_end,
+                   c_size
+            );
+
             printf("| empty\t| %d\t| %d\t| %d\n",
                    space[i - 1][0] + space[i - 1][1],
                    space[i][0],
                    space[i][0] - space[i - 1][0] - space[i - 1][1]
             );
-        printf("| full\t| %d\t| %d\t| %d\n",
-               space[i][0],
-               space[i][0] + space[i][1],
-               space[i][1]);
+
+            c_base = space[i][0];
+            c_end = space[i][0];
+            c_size = 0;
+        }
+        c_end += space[i][1];
+        c_size += space[i][1];
+
+        if (i == file_count - 1)
+            printf("| full\t| %d\t| %d\t| %d\n",
+                   c_base,
+                   c_end,
+                   c_size
+            );
     }
 
     if (DATA_SIZE - space[file_count - 1][0] - space[file_count - 1][1] != 0)
