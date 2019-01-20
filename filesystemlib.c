@@ -401,7 +401,6 @@ int add_file_as(char *filesystem_name, char *file_name, char *output_name) {
     free(p);
     printf("done\n # Added file data at offset: %.10i, bytecount: %li\n", base, filesize);
 
-
     printf("Done\n");
     return 0;
 }
