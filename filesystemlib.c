@@ -22,13 +22,13 @@ int add_file(char *filesystem_name, char *file_name) {
 
     printf("Adding file %.30s to %.30s ...\n", file_name, filesystem_name);
 
-//    printf("> Checking if file is already in the filesystem ... ");
-//    metadata_offset = find_file(filesystem_name,file_name);
-//    if(metadata_offset != -1){
-//        printf("failed\n # File exists in the filesystem, remove it before adding it\n");
-//        return -1;
-//    }
-//    printf("not found\n # File not found in the filesystem, continue operation\n");
+    printf("> Checking if file is already in the filesystem ... ");
+    metadata_offset = find_file(filesystem_name, file_name);
+    if (metadata_offset != -1) {
+        printf("failed\n # File exists in the filesystem, remove it before adding it\n");
+        return -1;
+    }
+    printf("not found\n # File not found in the filesystem, continue operation\n");
 
     printf("> Checking file size ... ");
     file_handle = fopen(file_name, "r");
@@ -253,19 +253,77 @@ int display_catalogue(char *filesystem_name) {
     return 0;
 }
 
-int display_catalogue_raw(char *filesystem_name) {
+int display_map(char *filesystem_name) {
     char metadata[METADATA_SIZE];
+    unsigned short int space[METADATA_MAX_ENTRIES][2];
+
     FILE *filesystem_handle = fopen(filesystem_name, "r");
     fread(metadata, METADATA_SIZE, 1, filesystem_handle);
     fclose(filesystem_handle);
+    int file_count = 0;
 
     for (int i = 0; i < METADATA_SIZE; i += 32)
         if (metadata[i] == 0x01) {
-            printf("%s\t", &metadata[i + 1]);
-            printf("%d\t", *((unsigned short *) &metadata[i + 28]));
-            printf("%d", *((unsigned short *) &metadata[i + 30]));
-            printf("\n");
+            space[file_count][0] = *((unsigned short *) &metadata[i + 28]);
+            space[file_count][1] = *((unsigned short *) &metadata[i + 30]);
+            file_count++;
         }
+
+    for (int i = 0; i < file_count - 1; i++)
+        for (int j = 0; j < file_count - i - 1; j++)
+            if (space[j][0] > space[j + 1][0]) {
+                unsigned short int temp[2];
+                temp[0] = space[j][0];
+                temp[1] = space[j][1];
+                space[j][0] = space[j + 1][0];
+                space[j][1] = space[j + 1][1];
+                space[j + 1][0] = temp[0];
+                space[j + 1][1] = temp[0];
+            }
+
+    printf("| state\t| base\t| end\t| size\n");
+
+    if (file_count == 0) {
+        printf("| empty\t| 0\t| %d\t| %d\n",
+               DATA_SIZE,
+               DATA_SIZE
+        );
+        return 0;
+    }
+
+    if (space[0][0] != 0) {
+        printf("| empty\t| 0\t\t| %d\t| %d\n",
+               space[0][0],
+               space[0][0]
+        );
+    }
+    printf("| full\t| %d\t| %d\t| %d\n",
+           space[0][0],
+           space[0][0] + space[0][1],
+           space[0][1]
+    );
+
+    for (int i = 1; i < file_count; ++i) {
+        if (space[i][0] - space[i - 1][0] - space[i - 1][1] != 0)
+            printf("| empty\t| %d\t| %d\t| %d\n",
+                   space[i - 1][0] + space[i - 1][1],
+                   space[i][0],
+                   space[i][0] - space[i - 1][0] - space[i - 1][1]
+            );
+        printf("| full\t| %d\t| %d\t| %d\n",
+               space[i][0],
+               space[i][0] + space[i][1],
+               space[i][1]);
+    }
+
+    if (DATA_SIZE - space[file_count - 1][0] - space[file_count - 1][1] != 0)
+        printf("| empty\t| %d\t| %d\t| %d\n",
+               space[file_count - 1][0] + space[file_count - 1][1],
+               DATA_SIZE,
+               DATA_SIZE - space[file_count - 1][0] - space[file_count - 1][1]
+        );
+
+
     return 0;
 }
 

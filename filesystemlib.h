@@ -22,5 +22,5 @@ int copy_file_from(char *filesystem_name, char *file_name, char *output_name);
 
 int display_catalogue(char *filesystem_name);
 
-int display_catalogue_raw(char *filesystem_name);
+int display_map(char *filesystem_name);
 #endif //FILE_SYSTEM_DEMO_FILESYSTEMLIB_H
