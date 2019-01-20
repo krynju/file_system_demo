@@ -130,8 +130,9 @@ int find_empty_data_space(char *filesystem_name, unsigned int size) {
                 taken_space[j][0] = taken_space[j + 1][0];
                 taken_space[j][1] = taken_space[j + 1][1];
                 taken_space[j + 1][0] = temp[0];
-                taken_space[j + 1][1] = temp[0];
+                taken_space[j + 1][1] = temp[1];
             }
+
 
     if (file_count == 0)
         return 0;
@@ -242,7 +243,7 @@ int display_catalogue(char *filesystem_name) {
     fread(metadata, METADATA_SIZE, 1, filesystem_handle);
     fclose(filesystem_handle);
 
-    printf("name\t\t| base \t| size \n");
+    printf("name\t| base \t| size \n");
     for (int i = 0; i < METADATA_SIZE; i += 32)
         if (metadata[i] == 0x01) {
             printf("%.27s\t", &metadata[i + 1]);
@@ -253,8 +254,8 @@ int display_catalogue(char *filesystem_name) {
             printf("\n");
         }
 
-    printf("files: %3d, total size: %5d / %5d, usage: %2.3f %%", file_count, total_size, DATA_SIZE,
-           1.0 * total_size / DATA_SIZE);
+    printf("files: %3d, total size: %5d / %5d, usage: %2.3f %%\n", file_count, total_size, DATA_SIZE,
+           100.0 * total_size / DATA_SIZE);
     return 0;
 }
 
@@ -283,7 +284,7 @@ int display_map(char *filesystem_name) {
                 space[j][0] = space[j + 1][0];
                 space[j][1] = space[j + 1][1];
                 space[j + 1][0] = temp[0];
-                space[j + 1][1] = temp[0];
+                space[j + 1][1] = temp[1];
             }
 
     printf("| state\t| base\t| end\t| size\n");
