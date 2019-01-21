@@ -36,6 +36,10 @@ int add_file(char *filesystem_name, char *file_name) {
     fseek(file_handle, 0, SEEK_END);
     long filesize = ftell(file_handle);
     fclose(file_handle);
+    if (filesize > DATA_SIZE) {
+        printf("failed\n # File too large\n");
+        return -1;
+    }
     printf("done\n # filesize: %.10li\n", filesize);
 
 
